@@ -1,0 +1,63 @@
+Import-Module ActiveDirectory
+
+# Initialize an array to store all user objects for JSON conversion
+$AllUsers = @()
+
+# Prompt for domain credentials
+$Cred = Get-Credential -Message "Enter your domain credentials"
+
+# Prompt for Domain_Controller IP
+$Domain_Controller = Read-Host "Enter Domain Controller IP (e.g., 192.168.1.22)"
+
+# Prompt for multiple names separated by commas
+$SearchNames = Read-Host "Enter names separated by commas (e.g., Cadis, Neil, Modesto, Barbosa, Jagonoy, acosta)"
+
+$DomainController = $Domain_Controller
+
+# Split input into an array and trim spaces
+$NameArray = $SearchNames -split "," | ForEach-Object { $_.Trim() }
+
+foreach ($Name in $NameArray) {
+    Write-Host "`nSearching for: $Name" -ForegroundColor Cyan
+
+    # Use -Filter for wildcard search and include the necessary properties
+    $Users = Get-ADUser -Filter "Name -like '*$Name*'" -Credential $Cred -Server $DomainController `
+        -Properties Enabled, DistinguishedName, UserPrincipalName, SamAccountName
+
+    if ($Users.Count -eq 0) {
+        Write-Host "No users found matching '$Name'." -ForegroundColor Red
+    } else {
+        foreach ($User in $Users) {
+            # 1. Display interactive feedback
+            Write-Host "---------------------------------------------------------" -ForegroundColor DarkGray
+            Write-Host "User Name:           $($User.Name)" -ForegroundColor Green
+            Write-Host "Logon Name (sAM):    $($User.SamAccountName)" -ForegroundColor Green
+            Write-Host "NT Account (UPN):    $($User.UserPrincipalName)" -ForegroundColor Green
+            Write-Host "Enabled:             $($User.Enabled)" -ForegroundColor Yellow
+            Write-Host "Distinguished Name:  $($User.DistinguishedName)" -ForegroundColor DarkCyan
+            
+            # 2. Create a structured object for JSON output and add it to the collection
+            $UserObject = [PSCustomObject]@{
+                Name = $User.Name
+                SamAccountName = $User.SamAccountName
+                UserPrincipalName = $User.UserPrincipalName
+                DistinguishedName = $User.DistinguishedName
+                IsDisabled = -not $User.Enabled # Convert boolean Enabled to IsDisabled
+            }
+            $AllUsers += $UserObject
+        }
+        Write-Host "---------------------------------------------------------" -ForegroundColor DarkGray
+    }
+}
+
+# --- JSON Conversion and Display ---
+# This section converts all collected user objects into a single JSON array and prints it to the console.
+Write-Host "`n=========================================================" -ForegroundColor White
+Write-Host "       JSON OUTPUT (All Found Users)" -ForegroundColor Yellow
+Write-Host "=========================================================" -ForegroundColor White
+
+# Convert the collected array of objects into a compact JSON string and display it.
+$AllUsers | ConvertTo-Json -Depth 5 -Compress | Write-Host -NoNewline
+
+Write-Host "`n=========================================================" -ForegroundColor White
+
