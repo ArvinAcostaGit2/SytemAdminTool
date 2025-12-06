@@ -1,0 +1,8 @@
+[
+    {
+        "Program": "Demo Domain",
+        "DomainControllerIP": "192.168.1.1",
+        "DomainUsername": "DOMAIN\\demo_user",
+        "DomainPassword": "password123"
+    }
+]
