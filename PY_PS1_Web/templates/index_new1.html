@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Directory User Search Tool</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0; 
+        }
+
+        .loading-overlay {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9); 
+            z-index: 1060; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-content {
+            background: #ffffff;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .top-header {
+            background-color: #ffffff; 
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px 0;
+            margin-bottom: 0;
+        }
+        
+        .top-header .app-title {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+        .top-header .app-subtitle {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-top: -5px; 
+            margin-bottom: 0;
+        }
+
+        .main-content-container {
+            margin-top: 30px; 
+            margin-bottom: 50px;
+        }
+        
+        .card-custom {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15); 
+            margin-bottom: 30px;
+        }
+        
+        .card-body-small-font {
+            font-size: 0.9rem; 
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-search,
+        .btn-disable-bulk,
+        .btn-clear-all {
+            padding: 10px 25px; 
+            font-weight: 600;
+            transition: transform 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-search {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-disable-bulk {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-disable-bulk:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+            color: white;
+        }
+
+        .btn-clear-all {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-clear-all:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+            color: white;
+        }
+
+        .search-area-col {
+            padding-top: 10px;
+        }
+
+        .action-button-col {
+            padding-top: 50px; 
+        }
+        
+        .action-button-group {
+            width: 100%; 
+        }
+        .action-button-group .btn {
+            margin-bottom: 10px; 
+            margin-left: 0 !important; 
+            margin-right: 0 !important;
+        }
+
+        .results-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-container {
+            border: 2px solid #667eea;
+            border-top: none; 
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+        
+        .table thead {
+            background-color: #f8f9fa;
+        }
+        
+        #resultsTableBody td {
+            white-space: nowrap; 
+        }
+
+        .checkbox-col {
+            width: 50px;
+            text-align: center;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+            min-width: 100px;
+        }
+
+        .btn-resetpass {
+            font-size: 0.85rem;
+            padding: 4px 8px;
+        }
+
+        .modal-header.bg-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .modal-header.bg-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h5 class="mt-3">Processing Request...</h5>
+            <p class="text-muted">Please wait while we complete the operation</p>
+        </div>
+    </div>
+
+    <!-- Bulk Disable Confirmation Modal -->
+    <div class="modal fade" id="disableConfirmModal" tabindex="-1" aria-labelledby="disableConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="disableConfirmModalLabel">
+                        <i class="bi bi-exclamation-triangle"></i> Confirm Account Disable
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <strong>Warning:</strong> You are about to disable <strong id="modalUserCount">0</strong> user account(s).
+                    </div>
+
+                    <div class="user-list-preview" id="modalUserList"></div>
+
+                    <div class="mt-4">
+                        <label for="ticketNumber" class="form-label required-field">Ticket Number</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="ticketNumber" 
+                            placeholder="Enter ticket number (e.g., INC123456)"
+                            autocomplete="off"
+                        >
+                        <small class="text-muted">A ticket number is required to proceed with account disabling.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="proceedDisableBtn" disabled>
+                        <i class="bi bi-check-circle"></i> Proceed with Disable
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="resetPasswordModalLabel">
+                        <i class="bi bi-key-fill"></i> Reset User Password
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Account:</strong> <span id="resetPasswordUsername">N/A</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="resetPasswordReference" class="form-label">
+                            <i class="bi bi-ticket-detailed"></i> Ticket Number / Reason <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="resetPasswordReference" 
+                            placeholder="e.g., INC123456 or 'User forgot password'"
+                            autocomplete="off"
+                            required
+                        >
+                        <small class="text-muted">Reference for documentation and audit trail</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input 
+                                class="form-check-input" 
+                                type="checkbox" 
+                                id="temporaryPasswordCheck" 
+                                checked
+                            >
+                            <label class="form-check-label" for="temporaryPasswordCheck">
+                                <i class="bi bi-clock-history"></i> <strong>Temporary Password</strong> (User must change at next logon)
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            Uncheck for permanent password (not recommended for security)
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newPasswordInput" class="form-label">
+                            <i class="bi bi-shield-lock"></i> New Password <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input 
+                                type="password" 
+                                class="form-control" 
+                                id="newPasswordInput" 
+                                placeholder="Enter new password"
+                                autocomplete="new-password"
+                                required
+                            >
+                            <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
+                                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Ensure password meets domain complexity requirements</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="proceedResetPasswordBtn" disabled>
+                        <i class="bi bi-check-circle"></i> Reset Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unlock Account Confirmation Modal -->
+    <div class="modal fade" id="unlockConfirmModal" tabindex="-1" aria-labelledby="unlockConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="unlockConfirmModalLabel">
+                        <i class="bi bi-unlock-fill"></i> Unlock User Account
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <strong>Account:</strong> <span id="unlockUsername">N/A</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="unlockReference" class="form-label">
+                            <i class="bi bi-ticket-detailed"></i> Ticket Number / Reason <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="unlockReference" 
+                            placeholder="e.g., INC123456 or 'Account locked due to failed attempts'"
+                            autocomplete="off"
+                            required
+                        >
+                        <small class="text-muted">Reference for documentation and audit trail</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="proceedUnlockBtn" disabled>
+                        <i class="bi bi-check-circle"></i> Unlock Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="top-header">
+        <div class="container" style="max-width: 1600px;">
+            <div class="d-flex flex-column">
+                <h1 class="app-title">
+                    <i class="bi bi-search me-4"></i> Active Directory User Search
+                </h1>
+                <p class="app-subtitle">RSAT-like interface for querying domain users</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container main-content-container" style="max-width: 1900px;"> 
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card card-custom">
+                    <div class="card-body card-body-small-font">
+                        <form id="searchForm">
+                            <div class="row g-3 align-items-start"> 
+                                <div class="col-md-8 search-area-col">
+                                    <label for="searchNames" class="form-label">
+                                        <i class="bi bi-people"></i> Search Names
+                                    </label>
+                                    <textarea 
+                                        class="form-control" 
+                                        id="searchNames" 
+                                        placeholder="Example:&#10;407006, acosta, arvin, NOC  [for Disabling]&#10;   or&#10;,acosta,,  [for Searching]" 
+                                        required
+                                        rows="5"
+                                    ></textarea>
+                                    <small class="text-muted">Enter four comma-separated fields per line. The **2nd field** is used for searching AD and all four fields are displayed in the results.</small>
+                                </div>
+
+                                <div class="col-md-4 action-button-col">
+                                    <div class="action-button-group d-flex flex-column">
+                                        <button type="button" class="btn btn-primary btn-search" id="searchButton">
+                                            <i class="bi bi-search"></i> Search Active Directory
+                                        </button>
+
+                                        <button type="button" class="btn btn-disable-bulk" id="bulkDisableBtn">
+                                            <i class="bi bi-x-circle"></i> Disable Selected User Accounts
+                                        </button>
+
+                                        <button type="button" class="btn btn-clear-all" id="clearAllBtn">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Clear All Fields
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>                            
+
+                            <div class="row g-3 mb-4">
+
+                                <div class="col">
+                                    <label for="programDropdown" class="form-label">
+                                        <i class="bi bi-list-columns"></i> Select Program
+                                    </label>
+                                    <select class="form-select" id="programDropdown" aria-label="Program Selector" disabled>
+                                        <option selected value="">-- Select a Program --</option>
+                                    </select>
+                                    <small class="text-muted">Enter NT Account first to enable</small>
+                                </div>
+
+                                <div class="col">
+                                    <label for="ntAccount" class="form-label">
+                                        <i class="bi bi-person-badge"></i> NT Account
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="ntAccount" 
+                                        placeholder="e.g., john.doe" 
+                                        required
+                                    >
+                                    <small class="text-muted">NT username (persists)</small>
+                                </div>
+
+                                <div class="col">
+                                    <label for="dcIP" class="form-label">
+                                        <i class="bi bi-hdd-network"></i> Domain Controller IP
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="dcIP" 
+                                        placeholder="e.g., 192.168.1.22" 
+                                        required
+                                    >
+                                </div>
+
+                                <div class="col">
+                                    <label for="username" class="form-label">
+                                        <i class="bi bi-person"></i> Domain Username
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="username" 
+                                        placeholder="e.g., DOMAIN\username" 
+                                        required
+                                        readonly
+                                    >
+                                    <small class="text-muted">Auto-populated</small>
+                                </div>
+
+                                <div class="col">
+                                    <label for="password" class="form-label">
+                                        <i class="bi bi-key"></i> Domain Password
+                                    </label>
+                                    <div class="input-group">
+                                        <input 
+                                            type="password" 
+                                            class="form-control" 
+                                            id="password" 
+                                            placeholder="Enter password" 
+                                            required
+                                            autocomplete="off"
+                                        >
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleDomainPasswordBtn">
+                                            <i class="bi bi-eye" id="toggleDomainPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="card card-custom p-0" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-table me-2"></i> Search Results
+                </div>
+                <span class="badge bg-light text-dark ms-2" id="totalUsersCount">0 users found</span>
+            </div>
+
+            <div class="table-container card-body-small-font">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="checkbox-col">
+                                    <input type="checkbox" class="form-check-input" id="selectAllCheckbox" title="Select/deselect all enabled users">
+                                </th>
+                                <th>EID</th> 
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Program</th> 
+                                <th>Full Name</th>
+                                <th>NT Account</th>
+                                <th>NT Name</th>
+                                <th>Status</th>
+                                <th>Reset Password</th>
+                                <th>Locked Out</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="action-buttons" id="actionButtons">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span id="selectedCount" class="fw-bold">0 users selected</span>
+                    <button class="btn btn-sm btn-outline-primary" id="clearSelectionBtn">
+                        <i class="bi bi-x-circle"></i> Clear Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div class="alert alert-danger error-alert mt-4" role="alert" id="errorAlert" style="display: none;">
+            <h5 class="alert-heading">
+                <i class="bi bi-exclamation-triangle"></i> Error
+            </h5>
+            <div id="errorMessage"></div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>   
+
+    <script src="/static/creds.js"></script>
+
+    <script src="/static/form_script.js"></script>
+
+    
+    <script src="/static/process_script.js"></script>
+</body>
+</html>
