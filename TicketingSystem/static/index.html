@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Support Ticket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 20px;
+        }
+        .ticket-card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 25px;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .priority-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .priority-badge:hover {
+            transform: scale(1.05);
+        }
+        .priority-badge.active {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        .priority-low {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .priority-low.active {
+            background-color: #28a745;
+            color: white;
+            border-color: #1e7e34;
+        }
+        .priority-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .priority-medium.active {
+            background-color: #ffc107;
+            color: #212529;
+            border-color: #d39e00;
+        }
+        .priority-high {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .priority-high.active {
+            background-color: #dc3545;
+            color: white;
+            border-color: #bd2130;
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+        .char-counter {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ticket-card">
+            <div class="card-header text-center">
+                <h2 class="mb-0"><i class="bi bi-ticket-perforated"></i> Submit Support Ticket</h2>
+                <p class="mb-0 mt-2 opacity-75">We're here to help! Fill out the form below and we'll get back to you soon.</p>
+            </div>
+            <div class="card-body p-4">
+                <!-- Success Alert -->
+                <div id="successAlert" class="alert alert-success d-none" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Success!</strong> Your ticket has been submitted successfully. 
+                    <br><span id="ticketNumber" class="mt-2 d-inline-block"></span>
+                </div>
+                
+                <!-- Error Alert -->
+                <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Error!</strong> 
+                    <span id="errorMessage"></span>
+                </div>
+
+                <!-- Ticket Form -->
+                <form id="ticketForm" novalidate>
+                    <!-- Name Field -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            Full Name <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="name" 
+                            name="name"
+                            required 
+                            minlength="2" 
+                            maxlength="100"
+                            placeholder="Enter your full name">
+                        <div class="invalid-feedback">
+                            Please enter your name (2-100 characters).
+                        </div>
+                    </div>
+
+                    <!-- Email Field -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            Email Address <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="email" 
+                            name="email"
+                            required
+                            placeholder="your.email@example.com">
+                        <div class="invalid-feedback">
+                            Please enter a valid email address.
+                        </div>
+                    </div>
+
+                    <!-- Subject Field -->
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">
+                            Subject <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="subject" 
+                            name="subject"
+                            required 
+                            minlength="5" 
+                            maxlength="200" 
+                            placeholder="Brief description of your issue">
+                        <div class="invalid-feedback">
+                            Please enter a subject (5-200 characters).
+                        </div>
+                    </div>
+
+                    <!-- Description Field -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            Description <span class="text-danger">*</span>
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="description" 
+                            name="description"
+                            rows="6" 
+                            required 
+                            minlength="10" 
+                            maxlength="2000"
+                            placeholder="Please provide detailed information about your issue..."></textarea>
+                        <div class="d-flex justify-content-between">
+                            <div class="form-text">Minimum 10 characters required</div>
+                            <div class="char-counter" id="charCounter">0 / 2000</div>
+                        </div>
+                        <div class="invalid-feedback">
+                            Please provide a description (10-2000 characters).
+                        </div>
+                    </div>
+
+                    <!-- Priority Selection -->
+                    <div class="mb-4">
+                        <label class="form-label d-block">Priority Level</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="priority-badge priority-low" data-priority="Low">
+                                <i class="bi bi-arrow-down-circle"></i> Low
+                            </span>
+                            <span class="priority-badge priority-medium active" data-priority="Medium">
+                                <i class="bi bi-dash-circle"></i> Medium
+                            </span>
+                            <span class="priority-badge priority-high" data-priority="High">
+                                <i class="bi bi-arrow-up-circle"></i> High
+                            </span>
+                        </div>
+                        <input type="hidden" id="priority" name="priority" value="Medium">
+                        <div class="form-text mt-2">Select the urgency level of your issue</div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-submit">
+                            <i class="bi bi-send-fill me-2"></i>Submit Ticket
+                        </button>
+                        <a href="/admin" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear-fill me-2"></i>Admin Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Footer -->
+            <div class="card-footer text-center text-muted py-3" style="background-color: #f8f9fa; border-radius: 0 0 15px 15px;">
+                <small><i class="bi bi-shield-check"></i> Your information is secure and will only be used for support purposes</small>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_BASE = 'http://127.0.0.1:8000/api';
+
+        // DOM Elements
+        const ticketForm = document.getElementById('ticketForm');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const charCounter = document.getElementById('charCounter');
+        const descriptionField = document.getElementById('description');
+        const priorityBadges = document.querySelectorAll('.priority-badge');
+        const priorityInput = document.getElementById('priority');
+
+        // Character counter for description
+        descriptionField.addEventListener('input', function() {
+            const length = this.value.length;
+            charCounter.textContent = `${length} / 2000`;
+            
+            if (length > 1900) {
+                charCounter.style.color = '#dc3545';
+            } else if (length > 1500) {
+                charCounter.style.color = '#ffc107';
+            } else {
+                charCounter.style.color = '#6c757d';
+            }
+        });
+
+        // Priority badge selection
+        priorityBadges.forEach(badge => {
+            badge.addEventListener('click', function() {
+                // Remove active class from all badges
+                priorityBadges.forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked badge
+                this.classList.add('active');
+                
+                // Update hidden input value
+                priorityInput.value = this.dataset.priority;
+            });
+        });
+
+        // Form validation
+        function validateForm() {
+            let isValid = true;
+            
+            // Name validation
+            const name = document.getElementById('name');
+            if (name.value.trim().length < 2 || name.value.trim().length > 100) {
+                name.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                name.classList.remove('is-invalid');
+                name.classList.add('is-valid');
+            }
+            
+            // Email validation
+            const email = document.getElementById('email');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.value.trim())) {
+                email.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                email.classList.remove('is-invalid');
+                email.classList.add('is-valid');
+            }
+            
+            // Subject validation
+            const subject = document.getElementById('subject');
+            if (subject.value.trim().length < 5 || subject.value.trim().length > 200) {
+                subject.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                subject.classList.remove('is-invalid');
+                subject.classList.add('is-valid');
+            }
+            
+            // Description validation
+            const description = document.getElementById('description');
+            if (description.value.trim().length < 10 || description.value.trim().length > 2000) {
+                description.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                description.classList.remove('is-invalid');
+                description.classList.add('is-valid');
+            }
+            
+            return isValid;
+        }
+
+        // Form submission
+        ticketForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validate form
+            if (!validateForm()) {
+                showError('Please correct the errors in the form.');
+                return;
+            }
+            
+            // Get submit button
+            const submitBtn = ticketForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Disable button and show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+
+            // Hide previous alerts
+            successAlert.classList.add('d-none');
+            errorAlert.classList.add('d-none');
+
+            // Prepare form data
+            const formData = {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                subject: document.getElementById('subject').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                priority: document.getElementById('priority').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/tickets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success - show success alert
+                    document.getElementById('ticketNumber').innerHTML = 
+                        `<strong>Ticket #${data.id}</strong> has been created. We'll contact you at <strong>${formData.email}</strong> soon.`;
+                    successAlert.classList.remove('d-none');
+                    
+                    // Reset form
+                    ticketForm.reset();
+                    document.querySelectorAll('.is-valid').forEach(el => el.classList.remove('is-valid'));
+                    
+                    // Reset priority to Medium
+                    priorityInput.value = 'Medium';
+                    priorityBadges.forEach(b => b.classList.remove('active'));
+                    document.querySelector('[data-priority="Medium"]').classList.add('active');
+                    
+                    // Reset character counter
+                    charCounter.textContent = '0 / 2000';
+                    charCounter.style.color = '#6c757d';
+                    
+                    // Scroll to success message
+                    successAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Auto-hide success message after 10 seconds
+                    setTimeout(() => {
+                        successAlert.classList.add('d-none');
+                    }, 10000);
+                } else {
+                    // Error from server
+                    let errorMsg = 'Failed to submit ticket. Please try again.';
+                    
+                    if (data.detail) {
+                        if (Array.isArray(data.detail)) {
+                            errorMsg = data.detail.map(err => err.msg).join(', ');
+                        } else {
+                            errorMsg = data.detail;
+                        }
+                    }
+                    
+                    showError(errorMsg);
+                }
+            } catch (error) {
+                // Network error
+                console.error('Error:', error);
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+
+        // Show error alert
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            errorAlert.classList.remove('d-none');
+            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Auto-hide error after 8 seconds
+            setTimeout(() => {
+                errorAlert.classList.add('d-none');
+            }, 8000);
+        }
+
+        // Real-time validation on blur
+        document.querySelectorAll('input, textarea').forEach(field => {
+            field.addEventListener('blur', function() {
+                if (this.value.trim().length > 0) {
+                    validateForm();
+                }
+            });
+        });
+
+        // Clear validation on focus
+        document.querySelectorAll('input, textarea').forEach(field => {
+            field.addEventListener('focus', function() {
+                this.classList.remove('is-invalid');
+                this.classList.remove('is-valid');
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✓ Ticketing System Ready');
+            console.log('✓ API Base:', API_BASE);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Ticketing System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.08);
+            --shadow-md: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        .navbar {
+            background: var(--primary-gradient);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .stats-card {
+            border: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            background: white;
+            overflow: hidden;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stats-card .card-body {
+            padding: 1.5rem;
+        }
+        
+        .stats-icon {
+            font-size: 2.5rem;
+            opacity: 0.2;
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        
+        .priority-low { 
+            color: #28a745;
+            font-weight: 600;
+        }
+        .priority-medium { 
+            color: #ffc107;
+            font-weight: 600;
+        }
+        .priority-high { 
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .status-open { background-color: #fff3cd; color: #856404; }
+        .status-in-progress { background-color: #cfe2ff; color: #084298; }
+        .status-resolved { background-color: #d1e7dd; color: #0f5132; }
+        .status-closed { background-color: #e2e3e5; color: #41464b; }
+        
+        .table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: #495057;
+            padding: 1rem 0.75rem;
+            white-space: nowrap;
+        }
+        
+        .table tbody tr {
+            transition: all 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+            box-shadow: inset 0 0 0 2px #e9ecef;
+        }
+        
+        .table tbody td {
+            vertical-align: middle;
+            padding: 1rem 0.75rem;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-header {
+            background: var(--primary-gradient);
+            color: white;
+            border-bottom: none;
+        }
+        
+        .modal-content {
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(3px);
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #6c757d;
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+        
+        .badge-pill {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border-radius: 10px;
+        }
+        
+        .search-input {
+            border-radius: 10px;
+            border: 1px solid #ced4da;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .ticket-id {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9998;
+        }
+        
+        .truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
+        }
+        
+        @media (max-width: 768px) {
+            .truncate {
+                max-width: 150px;
+            }
+            
+            .table {
+                font-size: 0.85rem;
+            }
+            
+            .stats-card .card-body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-speedometer2"></i> Admin Dashboard
+            </span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-white me-2 d-none d-md-inline" id="lastRefresh">
+                    <small>Last updated: --:--:--</small>
+                </span>
+                <button class="btn btn-light btn-sm" onclick="loadTickets()" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i> 
+                    <span class="d-none d-md-inline">Refresh</span>
+                </button>
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-house-fill"></i> 
+                    <span class="d-none d-md-inline">Request Form</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container-fluid px-3 px-md-4">
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card stats-card position-relative">
+                    <div class="card-body">
+                        <i class="bi bi-ticket-perforated stats-icon text-primary"></i>
+                        <h3 class="text-primary mb-0" id="totalTickets">0</h3>
+                        <p class="text-muted mb-0 small">Total Tickets</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card stats-card position-relative">
+                    <div class="card-body">
+                        <i class="bi bi-exclamation-circle stats-icon text-warning"></i>
+                        <h3 class="text-warning mb-0" id="openTickets">0</h3>
+                        <p class="text-muted mb-0 small">Open</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card stats-card position-relative">
+                    <div class="card-body">
+                        <i class="bi bi-hourglass-split stats-icon text-info"></i>
+                        <h3 class="text-info mb-0" id="inProgressTickets">0</h3>
+                        <p class="text-muted mb-0 small">In Progress</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card stats-card position-relative">
+                    <div class="card-body">
+                        <i class="bi bi-check-circle stats-icon text-success"></i>
+                        <h3 class="text-success mb-0" id="resolvedTickets">0</h3>
+                        <p class="text-muted mb-0 small">Resolved/Closed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filter-section">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label class="filter-label">
+                        <i class="bi bi-funnel"></i> Status Filter
+                    </label>
+                    <select class="form-select" id="statusFilter" onchange="loadTickets()">
+                        <option value="">All Statuses</option>
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label class="filter-label">
+                        <i class="bi bi-flag"></i> Priority Filter
+                    </label>
+                    <select class="form-select" id="priorityFilter" onchange="loadTickets()">
+                        <option value="">All Priorities</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div class="col-12 col-lg-4">
+                    <label class="filter-label">
+                        <i class="bi bi-search"></i> Search
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control search-input" 
+                        id="searchInput" 
+                        placeholder="Search by name, email, or subject...">
+                </div>
+                <div class="col-12 col-lg-2">
+                    <button class="btn btn-secondary w-100" onclick="clearFilters()">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets Table -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">ID</th>
+                            <th style="width: 15%;">Name</th>
+                            <th style="width: 18%;">Email</th>
+                            <th style="width: 22%;">Subject</th>
+                            <th style="width: 10%;">Priority</th>
+                            <th style="width: 12%;">Status</th>
+                            <th style="width: 13%;">Created</th>
+                            <th style="width: 5%;" class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticketsTableBody">
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="bi bi-inbox"></i>
+                                </div>
+                                <h5>No tickets available</h5>
+                                <p class="text-muted">Click the Refresh button to load tickets</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket Detail Modal -->
+    <div class="modal fade" id="ticketModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-ticket-detailed"></i> Ticket Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="fw-bold text-muted small">TICKET ID</label>
+                            <p class="mb-0 ticket-id fs-5" id="modalTicketId">--</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold text-muted small">PRIORITY</label>
+                            <p class="mb-0" id="modalPriority">--</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold text-muted small">CREATED</label>
+                            <p class="mb-0" id="modalCreatedAt">--</p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted small">CUSTOMER NAME</label>
+                            <p class="mb-0" id="modalName">--</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted small">EMAIL ADDRESS</label>
+                            <p class="mb-0">
+                                <a href="#" id="modalEmailLink" style="text-decoration: none;">
+                                    <i class="bi bi-envelope"></i> <span id="modalEmail">--</span>
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold text-muted small">SUBJECT</label>
+                        <p class="mb-0 fs-5" id="modalSubject">--</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold text-muted small">DESCRIPTION</label>
+                        <div class="p-3 bg-light rounded" id="modalDescription" style="white-space: pre-wrap;">--</div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold text-muted small">
+                            <i class="bi bi-gear"></i> UPDATE STATUS
+                        </label>
+                        <select class="form-select form-select-lg" id="modalStatus">
+                            <option value="Open">🟡 Open</option>
+                            <option value="In Progress">🔵 In Progress</option>
+                            <option value="Resolved">🟢 Resolved</option>
+                            <option value="Closed">⚫ Closed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold text-muted small">
+                            <i class="bi bi-pencil-square"></i> INTERNAL NOTES
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="modalNotes" 
+                            rows="5" 
+                            placeholder="Add internal notes, resolution details, or follow-up actions..."></textarea>
+                        <small class="text-muted">These notes are only visible to admin users</small>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <label class="fw-bold text-muted small">LAST UPDATED</label>
+                        <p class="mb-0 text-muted" id="modalUpdatedAt">--</p>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Close
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="updateTicket()">
+                        <i class="bi bi-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        
+        // State
+        let allTickets = [];
+        let currentTicketId = null;
+        let ticketModal;
+        let autoRefreshInterval;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize modal
+            ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
+            
+            // Load tickets immediately
+            loadTickets();
+            
+            // Setup auto-refresh (every 30 seconds)
+            autoRefreshInterval = setInterval(loadTickets, 30000);
+            
+            // Setup search input listener
+            document.getElementById('searchInput').addEventListener('input', debounce(filterTickets, 300));
+            
+            console.log('✓ Admin Dashboard Ready');
+            console.log('✓ API Base:', API_BASE);
+            console.log('✓ Auto-refresh: Every 30 seconds');
+        });
+
+        // Load tickets from API
+        async function loadTickets() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            
+            let url = `${API_BASE}/tickets?`;
+            const params = [];
+            
+            if (statusFilter) params.push(`status=${encodeURIComponent(statusFilter)}`);
+            if (priorityFilter) params.push(`priority=${encodeURIComponent(priorityFilter)}`);
+            
+            url += params.join('&');
+
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                allTickets = await response.json();
+                filterTickets();
+                updateStats();
+                updateLastRefresh();
+                
+            } catch (error) {
+                console.error('Error loading tickets:', error);
+                showToast('Failed to load tickets. Please check your connection.', 'danger');
+            }
+        }
+
+        // Filter tickets based on search input
+        function filterTickets() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            const filtered = allTickets.filter(ticket => {
+                const searchableText = [
+                    ticket.name,
+                    ticket.email,
+                    ticket.subject,
+                    ticket.description
+                ].join(' ').toLowerCase();
+                
+                return searchableText.includes(searchTerm);
+            });
+            
+            renderTickets(filtered);
+        }
+
+        // Render tickets to table
+        function renderTickets(tickets) {
+            const tbody = document.getElementById('ticketsTableBody');
+            
+            if (tickets.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <h5>No tickets found</h5>
+                            <p class="text-muted">Try adjusting your filters or search terms</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = tickets.map(ticket => `
+                <tr onclick="viewTicket(${ticket.id})">
+                    <td><span class="ticket-id">#${ticket.id}</span></td>
+                    <td><span class="truncate" title="${escapeHtml(ticket.name)}">${escapeHtml(ticket.name)}</span></td>
+                    <td><span class="truncate" title="${escapeHtml(ticket.email)}">${escapeHtml(ticket.email)}</span></td>
+                    <td><span class="truncate" title="${escapeHtml(ticket.subject)}">${escapeHtml(ticket.subject)}</span></td>
+                    <td class="priority-${ticket.priority.toLowerCase()}">
+                        <i class="bi bi-circle-fill"></i> ${ticket.priority}
+                    </td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(ticket.status)}">
+                            ${ticket.status}
+                        </span>
+                    </td>
+                    <td>${formatDate(ticket.created_at)}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary action-btn" 
+                                onclick="event.stopPropagation(); viewTicket(${ticket.id})"
+                                title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Update statistics cards
+        function updateStats() {
+            document.getElementById('totalTickets').textContent = allTickets.length;
+            document.getElementById('openTickets').textContent = 
+                allTickets.filter(t => t.status === 'Open').length;
+            document.getElementById('inProgressTickets').textContent = 
+                allTickets.filter(t => t.status === 'In Progress').length;
+            document.getElementById('resolvedTickets').textContent = 
+                allTickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
+        }
+
+        // View ticket details
+        async function viewTicket(ticketId) {
+            currentTicketId = ticketId;
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/tickets/${ticketId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const ticket = await response.json();
+
+                // Populate modal
+                document.getElementById('modalTicketId').textContent = `#${ticket.id}`;
+                document.getElementById('modalName').textContent = ticket.name;
+                document.getElementById('modalEmail').textContent = ticket.email;
+                document.getElementById('modalEmailLink').href = `mailto:${ticket.email}`;
+                document.getElementById('modalSubject').textContent = ticket.subject;
+                document.getElementById('modalDescription').textContent = ticket.description;
+                
+                // Priority with color
+                const priorityEl = document.getElementById('modalPriority');
+                priorityEl.textContent = ticket.priority;
+                priorityEl.className = `mb-0 priority-${ticket.priority.toLowerCase()}`;
+                
+                document.getElementById('modalStatus').value = ticket.status;
+                document.getElementById('modalNotes').value = ticket.notes || '';
+                document.getElementById('modalCreatedAt').textContent = formatDateLong(ticket.created_at);
+                document.getElementById('modalUpdatedAt').textContent = formatDateLong(ticket.updated_at);
+
+                ticketModal.show();
+                
+            } catch (error) {
+                console.error('Error loading ticket:', error);
+                showToast('Failed to load ticket details.', 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Update ticket
+        async function updateTicket() {
+            if (!currentTicketId) return;
+
+            const status = document.getElementById('modalStatus').value;
+            const notes = document.getElementById('modalNotes').value.trim();
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/tickets/${currentTicketId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, notes })
+                });
+
+                if (response.ok) {
+                    ticketModal.hide();
+                    await loadTickets();
+                    showToast('Ticket updated successfully!', 'success');
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.detail || 'Update failed');
+                }
+                
+            } catch (error) {
+                console.error('Error updating ticket:', error);
+                showToast('Failed to update ticket: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('priorityFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            loadTickets();
+        }
+
+        // Update last refresh timestamp
+        function updateLastRefresh() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastRefresh').innerHTML = 
+                `<small>Last updated: ${timeString}</small>`;
+        }
+
+        // Helper: Get status CSS class
+        function getStatusClass(status) {
+            const normalized = status.toLowerCase().replace(/\s+/g, '-');
+            return `status-${normalized}`;
+        }
+
+        // Helper: Format date (short)
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+            });
+        }
+
+        // Helper: Format date (long)
+        function formatDateLong(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Helper: Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            const bgClass = {
+                'success': 'bg-success',
+                'danger': 'bg-danger',
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+            
+            const icon = {
+                'success': 'check-circle-fill',
+                'danger': 'exclamation-triangle-fill',
+                'warning': 'exclamation-circle-fill',
+                'info': 'info-circle-fill'
+            }[type] || 'info-circle-fill';
+            
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-${icon} me-2"></i>${escapeHtml(message)}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 4000 });
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>
